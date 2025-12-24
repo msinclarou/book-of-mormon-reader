@@ -1,11 +1,16 @@
-const text = [
-    "I, Nephi, having been born of goodly parents...",
-    "Therefore I was taught somewhat in all the learning of my father...",
-    "And I make a record of my proceedings in my days...",
-    "Yea, I make a record in the language of my father..."
-];
-
+let text = [];
 let index = 0;
+
+fetch("scripture.txt")
+    .then(response => response.text())
+    .then(data => {
+        text = data.split("\n").filter(line => line.trim() !== "");
+        updateLine();
+    })
+    .catch(error => {
+        document.getElementById("line").innerText = "Error loading scripture.";
+        console.error(error);
+    });
 
 function updateLine() {
     document.getElementById("line").innerText = text[index];
@@ -24,5 +29,3 @@ function prevLine() {
         updateLine();
     }
 }
-
-updateLine();
