@@ -246,6 +246,8 @@ const chapterNames = [
 ];
 const chapterNameSet = new Set(chapterNames);
 
+initializeChapterSelect();
+
 fetch("scripture.txt")
     .then(res => res.text())
     .then(data => {
@@ -254,8 +256,15 @@ fetch("scripture.txt")
         if (Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < items.length) {
             index = savedIndex;
         }
-        setupChapterSelect();
+        buildChapterIndexMap();
         displayItem();
+    })
+    .catch(error => {
+        console.error("Failed to load scripture text:", error);
+        const display = document.getElementById("line");
+        if (display) {
+            display.innerText = "Unable to load scripture text. Please refresh or try again later.";
+        }
     });
 
 function parseScripture(text) {
@@ -323,16 +332,11 @@ function prevLine() {
     }
 }
 
-function setupChapterSelect() {
+function initializeChapterSelect() {
     chapterSelect = document.getElementById("chapter-select");
     if (!chapterSelect) {
         return;
     }
-
-    chapterIndices = items
-        .map((item, itemIndex) => (item.type === "chapter" ? { index: itemIndex, text: item.text } : null))
-        .filter(Boolean);
-    chapterIndexByName = new Map(chapterIndices.map(chapter => [chapter.text, chapter.index]));
 
     chapterSelect.innerHTML = "";
     for (const chapterName of chapterNames) {
@@ -345,13 +349,12 @@ function setupChapterSelect() {
     chapterSelect.addEventListener("change", event => {
         const selectedName = event.target.value;
         const selectedIndex = chapterIndexByName.get(selectedName);
-        if (Number.isInteger(selectedIndex)) {
-            index = selectedIndex;
-            displayItem();
+        if (!Number.isInteger(selectedIndex)) {
+            return;
         }
+        index = selectedIndex;
+        displayItem();
     });
-
-    updateChapterSelect();
 }
 
 function updateChapterSelect() {
@@ -366,6 +369,14 @@ function updateChapterSelect() {
             chapterSelect.value = chapterName;
         }
     }
+}
+
+function buildChapterIndexMap() {
+    chapterIndices = items
+        .map((item, itemIndex) => (item.type === "chapter" ? { index: itemIndex, text: item.text } : null))
+        .filter(Boolean);
+    chapterIndexByName = new Map(chapterIndices.map(chapter => [chapter.text, chapter.index]));
+    updateChapterSelect();
 }
 
 function findCurrentChapterIndex(startIndex) {
