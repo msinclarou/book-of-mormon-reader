@@ -1,5 +1,7 @@
 let items = []; // chapters + verses
 let index = 0;
+let chapterSelect = null;
+let chapterIndices = [];
 
 fetch("scripture.txt")
     .then(res => res.text())
@@ -9,6 +11,7 @@ fetch("scripture.txt")
         if (Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < items.length) {
             index = savedIndex;
         }
+        setupChapterSelect();
         displayItem();
     });
 
@@ -61,6 +64,7 @@ function displayItem() {
     }
 
     localStorage.setItem("bomReaderIndex", index.toString());
+    updateChapterSelect();
 }
 
 function nextLine() {
@@ -75,4 +79,53 @@ function prevLine() {
         index--;
         displayItem();
     }
+}
+
+function setupChapterSelect() {
+    chapterSelect = document.getElementById("chapter-select");
+    if (!chapterSelect) {
+        return;
+    }
+
+    chapterIndices = items
+        .map((item, itemIndex) => (item.type === "chapter" ? { index: itemIndex, text: item.text } : null))
+        .filter(Boolean);
+
+    chapterSelect.innerHTML = "";
+    for (const chapter of chapterIndices) {
+        const option = document.createElement("option");
+        option.value = chapter.index.toString();
+        option.textContent = chapter.text;
+        chapterSelect.appendChild(option);
+    }
+
+    chapterSelect.addEventListener("change", event => {
+        const selectedIndex = Number.parseInt(event.target.value, 10);
+        if (Number.isInteger(selectedIndex)) {
+            index = selectedIndex;
+            displayItem();
+        }
+    });
+
+    updateChapterSelect();
+}
+
+function updateChapterSelect() {
+    if (!chapterSelect || chapterIndices.length === 0) {
+        return;
+    }
+
+    const chapterIndex = findCurrentChapterIndex(index);
+    if (chapterIndex !== null) {
+        chapterSelect.value = chapterIndex.toString();
+    }
+}
+
+function findCurrentChapterIndex(startIndex) {
+    for (let i = startIndex; i >= 0; i -= 1) {
+        if (items[i].type === "chapter") {
+            return i;
+        }
+    }
+    return null;
 }
